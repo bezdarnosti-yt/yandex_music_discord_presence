@@ -25,16 +25,25 @@ std::string to_string(winrt::hstring const& hstr) {
     return result;
 }
 
+static winrt::Windows::Media::Control::GlobalSystemMediaTransportControlsSessionManager g_manager = nullptr;
+static int g_managerRefreshCounter = 0;
+
 TrackInfo getMediaSessionTrack() {
     TrackInfo info{};
     info.found = false;
 
     try {
-        auto manager =
-            winrt::Windows::Media::Control::
-            GlobalSystemMediaTransportControlsSessionManager::RequestAsync().get();
+        // Пересоздаем менеджер каждые 50 запросов для обновления
+        if (!g_manager || g_managerRefreshCounter++ > 50) {
+            g_manager = winrt::Windows::Media::Control::
+                GlobalSystemMediaTransportControlsSessionManager::RequestAsync().get();
+            g_managerRefreshCounter = 0;
+        }
 
-        auto sessions = manager.GetSessions();
+        if (!g_manager) return info;
+
+        auto sessions = g_manager.GetSessions();
+        if (!sessions || sessions.Size() == 0) return info;
 
         for (uint32_t i = 0; i < sessions.Size(); ++i) {
             auto session = sessions.GetAt(i);
@@ -56,22 +65,24 @@ TrackInfo getMediaSessionTrack() {
 
             auto playbackInfo = session.GetPlaybackInfo();
             if (playbackInfo) {
-                info.is_playing =
-                    playbackInfo.PlaybackStatus() ==
+                auto status = playbackInfo.PlaybackStatus();
+                info.is_playing = (status == 
                     winrt::Windows::Media::Control::
-                    GlobalSystemMediaTransportControlsSessionPlaybackStatus::Playing;
+                    GlobalSystemMediaTransportControlsSessionPlaybackStatus::Playing);
             }
 
             auto timeline = session.GetTimelineProperties();
-            info.current_sec  = int(timeline.Position().count() / 10000000);
-            info.duration_sec = int(timeline.EndTime().count() / 10000000);
+            if (timeline) {
+                info.current_sec  = int(timeline.Position().count() / 10000000);
+                info.duration_sec = int(timeline.EndTime().count() / 10000000);
+            }
 
             info.found = true;
             return info;
         }
     }
-    catch (const winrt::hresult_error& e) {
-
+    catch (...) {
+        g_manager = nullptr;
     }
 
     return info;

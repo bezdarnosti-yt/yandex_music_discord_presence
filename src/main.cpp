@@ -84,7 +84,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         if (updateCounter % 20 == 0) {
             TrackInfo currentTrack = getMediaSessionTrack();
             
-            if (currentTrack.title != lastTrack.title || 
+            if (currentTrack.found != lastTrack.found ||
+                currentTrack.title != lastTrack.title || 
                 currentTrack.artist != lastTrack.artist ||
                 currentTrack.is_playing != lastTrack.is_playing) {
                 
