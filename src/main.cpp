@@ -3,8 +3,10 @@
 #include <chrono>
 #include <ctime>
 #include <string>
+#include <Windows.h>
 #include "discord.h"
 #include "media_session.h"
+#include "tray_icon.h"
 
 void updateRichPresence(discord::Core* core, const TrackInfo& track) {
     discord::Activity activity{};
@@ -32,36 +34,36 @@ void updateRichPresence(discord::Core* core, const TrackInfo& track) {
         }
     }
     
-    core->ActivityManager().UpdateActivity(activity, [](discord::Result result) {
-        if (result == discord::Result::Ok) {
-            std::cout << "Rich Presence updated" << std::endl;
-        }
-    });
+    core->ActivityManager().UpdateActivity(activity, [](discord::Result result) {});
 }
 
-int main() {
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     winrt::init_apartment();
     
     discord::ClientId client_id = 1206479426884345927LL;
     
-    std::cout << "Init Discord SDK..." << std::endl;
+    TrayIcon tray;
+    
+    WNDCLASSW wc = {};
+    wc.lpfnWndProc = WndProc;
+    wc.hInstance = hInstance;
+    wc.lpszClassName = L"YandexMusicRPC";
+    RegisterClassW(&wc);
+    
+    HWND hwnd = CreateWindowW(L"YandexMusicRPC", L"Yandex Music RPC", 0, 0, 0, 0, 0, NULL, NULL, hInstance, &tray);
     
     discord::Core* core{};
     auto result = discord::Core::Create(client_id, DiscordCreateFlags_Default, &core);
     
     if (result != discord::Result::Ok) {
-        std::cerr << "\nInit error Discord SDK!" << std::endl;
+        MessageBoxW(NULL, L"Failed to initialize Discord SDK", L"Error", MB_ICONERROR);
         return -1;
     }
-    
-    std::cout << "Discord SDK initialized!" << std::endl;
     
     for (int i = 0; i < 30; i++) {
         core->RunCallbacks();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    
-    std::cout << "Yandex Music Discord RPC launched!" << std::endl;
     
     TrackInfo lastTrack{};
     int updateCounter = 0;
@@ -70,7 +72,13 @@ int main() {
     updateRichPresence(core, currentTrack);
     lastTrack = currentTrack;
     
-    while (true) {
+    MSG msg;
+    while (tray.running) {
+        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+        
         core->RunCallbacks();
         
         if (updateCounter % 20 == 0) {
@@ -79,19 +87,6 @@ int main() {
             if (currentTrack.title != lastTrack.title || 
                 currentTrack.artist != lastTrack.artist ||
                 currentTrack.is_playing != lastTrack.is_playing) {
-                
-                if (currentTrack.found) {
-                    std::cout << "\n" << currentTrack.title << std::endl;
-                    std::cout << currentTrack.artist << std::endl;
-                    
-                    if (currentTrack.is_playing) {
-                        std::cout << "Playing" << std::endl;
-                    } else {
-                        std::cout << "Paused" << std::endl;
-                    }
-                } else {
-                    std::cout << "\nSong doesn't found" << std::endl;
-                }
                 
                 updateRichPresence(core, currentTrack);
                 lastTrack = currentTrack;
@@ -102,6 +97,7 @@ int main() {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     
+    tray.Remove();
     winrt::uninit_apartment();
     delete core;
     return 0;

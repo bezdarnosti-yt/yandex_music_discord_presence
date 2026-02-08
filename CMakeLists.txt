@@ -12,8 +12,9 @@ set(DISCORD_SDK_LIB_DIR "${DISCORD_SDK_ROOT}/lib/x86_64")
 file(GLOB DISCORD_SDK_SOURCES "${DISCORD_SDK_INCLUDE}/*.cpp")
 
 
-add_executable(${PROJECT_NAME} 
+add_executable(${PROJECT_NAME} WIN32
     src/main.cpp
+    src/app.rc
     ${DISCORD_SDK_SOURCES}
 )
 
