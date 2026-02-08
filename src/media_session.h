@@ -40,22 +40,27 @@ TrackInfo getMediaSessionTrack() {
             auto session = sessions.GetAt(i);
             if (!session) continue;
 
-            if (winrt::to_string(session.SourceAppUserModelId())
-                != "ru.yandex.desktop.music")
+            auto appId = winrt::to_string(session.SourceAppUserModelId());
+            if (appId != "ru.yandex.desktop.music")
                 continue;
 
             auto mediaProps = session.TryGetMediaPropertiesAsync().get();
-            if (mediaProps) {
-                info.title  = winrt::to_string(mediaProps.Title());
-                info.artist = winrt::to_string(mediaProps.Artist());
-                info.album  = winrt::to_string(mediaProps.AlbumTitle());
-            }
+            if (!mediaProps) continue;
+            
+            auto title = winrt::to_string(mediaProps.Title());
+            if (title.empty()) continue;
+
+            info.title  = title;
+            info.artist = winrt::to_string(mediaProps.Artist());
+            info.album  = winrt::to_string(mediaProps.AlbumTitle());
 
             auto playbackInfo = session.GetPlaybackInfo();
-            info.is_playing =
-                playbackInfo.PlaybackStatus() ==
-                winrt::Windows::Media::Control::
-                GlobalSystemMediaTransportControlsSessionPlaybackStatus::Playing;
+            if (playbackInfo) {
+                info.is_playing =
+                    playbackInfo.PlaybackStatus() ==
+                    winrt::Windows::Media::Control::
+                    GlobalSystemMediaTransportControlsSessionPlaybackStatus::Playing;
+            }
 
             auto timeline = session.GetTimelineProperties();
             info.current_sec  = int(timeline.Position().count() / 10000000);
@@ -66,8 +71,7 @@ TrackInfo getMediaSessionTrack() {
         }
     }
     catch (const winrt::hresult_error& e) {
-        std::cerr << "[YandexMusic ERROR] "
-                  << winrt::to_string(e.message()) << "\n";
+
     }
 
     return info;
