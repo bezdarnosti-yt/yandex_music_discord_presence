@@ -1,21 +1,4 @@
-#pragma once
-
-#include <Windows.h>
-#include <string>
-#include <iostream>
-#include <winrt/Windows.Foundation.h>
-#include <winrt/Windows.Foundation.Collections.h>
-#include <winrt/Windows.Media.Control.h>
-
-struct TrackInfo {
-    std::string title;
-    std::string artist;
-    std::string album;
-    int current_sec;
-    int duration_sec;
-    bool is_playing;
-    bool found;
-};
+#include "media_session.h"
 
 std::string to_string(winrt::hstring const& hstr) {
     std::wstring wstr(hstr.c_str());
@@ -33,7 +16,6 @@ TrackInfo getMediaSessionTrack() {
     info.found = false;
 
     try {
-        // Пересоздаем менеджер каждые 50 запросов для обновления
         if (!g_manager || g_managerRefreshCounter++ > 50) {
             g_manager = winrt::Windows::Media::Control::
                 GlobalSystemMediaTransportControlsSessionManager::RequestAsync().get();

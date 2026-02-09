@@ -11,16 +11,19 @@ set(DISCORD_SDK_LIB_DIR "${DISCORD_SDK_ROOT}/lib/x86_64")
 
 file(GLOB DISCORD_SDK_SOURCES "${DISCORD_SDK_INCLUDE}/*.cpp")
 
+file(GLOB SRC "${CMAKE_SOURCE_DIR}/src/*.cpp")
+file(GLOB INCL "${CMAKE_SOURCE_DIR}/include/*.h")
+
 
 add_executable(${PROJECT_NAME} WIN32
-    src/main.cpp
+    ${SRC}
     src/app.rc
     ${DISCORD_SDK_SOURCES}
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE 
     ${DISCORD_SDK_INCLUDE}
-    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/include
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -28,7 +31,6 @@ target_link_libraries(${PROJECT_NAME}
     windowsapp.lib  # WinRT
 )
 
-# Копируем DLL Discord SDK
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${DISCORD_SDK_ROOT}/lib/x86_64/discord_game_sdk.dll"
