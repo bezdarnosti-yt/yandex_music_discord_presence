@@ -12,12 +12,12 @@
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     // Debug purpose
-    if (AllocConsole()) {
-        FILE* pCout;
-        freopen_s(&pCout, "CONOUT$", "w", stdout); // Redirect stdout
-        SetConsoleTitle("Debug Console");
-        std::cout.clear(); // Clear the error state for the standard stream objects
-    }
+    // if (AllocConsole()) {
+    //     FILE* pCout;
+    //     freopen_s(&pCout, "CONOUT$", "w", stdout); // Redirect stdout
+    //     SetConsoleTitle("Debug Console");
+    //     std::cout.clear(); // Clear the error state for the standard stream objects
+    // }
 
     winrt::init_apartment();
     
