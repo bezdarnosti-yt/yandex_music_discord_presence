@@ -1,45 +1,59 @@
+#define DISCORDPP_IMPLEMENTATION
+
 #include "discord_client.h"
+
+#include <spdlog/spdlog.h>
 
 DiscordClient::DiscordClient() {
     DiscordClient::init();
 }
 
 DiscordClient::~DiscordClient() {
-    delete this->core;
+
 }
 
 void DiscordClient::init() {
-    this->client_id = app_id;
-    this->result = discord::Core::Create(this->client_id, DiscordCreateFlags_Default, &this->core);
-
-    if (this->result != discord::Result::Ok) {
-        MessageBoxW(NULL, L"Failed to initialize Discord SDK", L"Error", MB_ICONERROR);
-    }
-
-    for (int i = 0; i < 30; i++) {
-        this->core->RunCallbacks();
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
+    this->client.SetApplicationId(this->app_id);
+    this->client.AddLogCallback(
+        [](const auto &message, auto severity) {
+            switch (severity) {
+                case discordpp::LoggingSeverity::Info:
+                    spdlog::info(message);
+                    break;
+                case discordpp::LoggingSeverity::Warning:
+                    spdlog::warn(message);
+                    break;
+                case discordpp::LoggingSeverity::Error:
+                    spdlog::error(message);
+                    break;
+                case discordpp::LoggingSeverity::Verbose:
+                    spdlog::debug(message);
+                    break;
+                default:
+                    spdlog::error(message);
+            }
+        },
+        discordpp::LoggingSeverity::Warning);
 }
 
-discord::Core* DiscordClient::getCore() {
-    return this->core;
+void DiscordClient::runCallbacks() {
+    discordpp::RunCallbacks();
 }
 
 void DiscordClient::updateRichPresence(const TrackInfo& track) {
-    discord::Activity activity{};
+    discordpp::RunCallbacks();
 
-    activity.GetAssets().SetLargeImage("channels4_profile");
+    discordpp::ActivityAssets assets;
+
+    assets.SetLargeImage("channels4_profile");
     
     if (!track.found) {
         activity.SetState("Not playing...");
         activity.SetDetails("Yandex Music");
-        activity.SetType(discord::ActivityType::Playing);
+        activity.SetType(discordpp::ActivityTypes::Listening);
     } else {
         activity.SetDetails((track.title + " — " + track.artist).c_str());
-        activity.SetType(discord::ActivityType::Playing);
-
-        activity.GetAssets().SetLargeText(track.album.c_str());
+        activity.SetType(discordpp::ActivityTypes::Listening);
 
         int currentTime = track.current_sec;
         int maxTime = track.duration_sec;
@@ -69,17 +83,25 @@ void DiscordClient::updateRichPresence(const TrackInfo& track) {
         std::string s_finalResult = s_currentTime + "/" + s_maxTime;
         
         if (track.is_playing) {
-            activity.GetAssets().SetSmallImage("play");
-            activity.GetAssets().SetSmallText("Playing");
+            assets.SetSmallImage("play");
+            assets.SetSmallText("Playing");
             activity.SetState(s_finalResult.c_str());
         } else {
-            activity.GetAssets().SetSmallImage("pause");
-            activity.GetAssets().SetSmallText("Paused");
+            assets.SetSmallImage("pause");
+            assets.SetSmallText("Paused");
             activity.SetState("Paused");
         }
-
-        std::cout << "updated" << std::endl;
     }
+
+    activity.SetAssets(assets);
     
-    this->core->ActivityManager().UpdateActivity(activity, [](discord::Result result) {});
+    this->client.UpdateRichPresence(
+        this->activity, [](const discordpp::ClientResult &result) {
+            if (result.Successful()) {
+                spdlog::info("Rich presence updated");
+            } else {
+                spdlog::error("Failed to update rich presence: {}", result.Error());
+            }
+        }
+    );
 }
