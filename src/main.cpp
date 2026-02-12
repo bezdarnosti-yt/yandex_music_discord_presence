@@ -4,20 +4,18 @@
 #include <string>
 #include <Windows.h>
 
-#include "discord.h"
-
 #include "media_session.h"
 #include "tray_icon.h"
 #include "discord_client.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     // Debug purpose
-    // if (AllocConsole()) {
-    //     FILE* pCout;
-    //     freopen_s(&pCout, "CONOUT$", "w", stdout); // Redirect stdout
-    //     SetConsoleTitle("Debug Console");
-    //     std::cout.clear(); // Clear the error state for the standard stream objects
-    // }
+    if (AllocConsole()) {
+        FILE* pCout;
+        freopen_s(&pCout, "CONOUT$", "w", stdout); // Redirect stdout
+        SetConsoleTitle("Debug Console");
+        std::cout.clear(); // Clear the error state for the standard stream objects
+    }
 
     winrt::init_apartment();
     
@@ -49,9 +47,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             DispatchMessage(&msg);
         }
         
-        client.getCore()->RunCallbacks();
-        
-        if (updateCounter % 20 == 0) {
+        if (updateCounter % 10 == 0) {
             currentTrack = getMediaSessionTrack();
             
             if (currentTrack.found != lastTrack.found ||
@@ -66,7 +62,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             if (currentTrack.is_playing != true) {
                 currentTrack.current_sec = currentTime;
                 client.updateRichPresence(currentTrack);
-                updateCounter += 2;
+                updateCounter += 1;
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 continue;
             }
@@ -76,7 +72,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 currentTime = prevTime;
             }
 
-            currentTime += 2;
+            currentTime += 1;
             currentTrack.current_sec = currentTime;
 
             client.updateRichPresence(currentTrack);

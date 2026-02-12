@@ -1,6 +1,8 @@
 #pragma once
 #include <iostream>
-#include "discord.h"
+#include <chrono>
+#include <ctime>
+#include "discordpp.h"
 #include "media_session.h"
 
 class DiscordClient {
@@ -8,15 +10,12 @@ public:
     DiscordClient();
     ~DiscordClient();
 
-    void updateRichPresence(const TrackInfo& track);
-
-    discord::Core* getCore();
-private:
-    long long app_id = 1206479426884345927LL;
-    
-    discord::ClientId client_id;
-    discord::Core* core{};
-    discord::Result result;
-
     void init();
+    void runCallbacks();
+    void updateRichPresence(const TrackInfo& track);
+private:
+    const uint64_t app_id = 1206479426884345927LL;
+
+    discordpp::Client client;
+    discordpp::Activity activity{};
 };
