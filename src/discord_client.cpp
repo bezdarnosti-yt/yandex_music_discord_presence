@@ -46,6 +46,7 @@ void DiscordClient::updateRichPresence(const TrackInfo& track) {
         assets.SetLargeImage("channels4_profile");
         newActivity.SetState("Ничего не играет :(");
         newActivity.SetDetails("Яндекс.Музыка");
+        newActivity.SetAssets(assets);
     } else {
         assets.SetLargeImage(track.album_cover_url);
         newActivity.SetDetails(track.title.c_str());
@@ -71,6 +72,13 @@ void DiscordClient::updateRichPresence(const TrackInfo& track) {
             assets.SetSmallImage("pause");
             assets.SetSmallText("Paused");
         }
+
+        newActivity.SetAssets(assets);
+
+        discordpp::ActivityButton button;
+        button.SetLabel("GitHub проект");
+        button.SetUrl("https://github.com/bezdarnosti-yt/yandex_music_discord_presence");
+        newActivity.AddButton(button);
     }
 
     newActivity.SetAssets(assets);

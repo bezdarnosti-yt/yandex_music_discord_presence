@@ -12,12 +12,12 @@
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     // Терминал для отладки, можно удалить в релизной компиляции
-    if (AllocConsole()) {
-        FILE* pCout;
-        freopen_s(&pCout, "CONOUT$", "w", stdout);
-        SetConsoleTitle("Debug Console");
-        std::cout.clear();
-    }
+    // if (AllocConsole()) {
+    //     FILE* pCout;
+    //     freopen_s(&pCout, "CONOUT$", "w", stdout);
+    //     SetConsoleTitle("Debug Console");
+    //     std::cout.clear();
+    // }
 
     winrt::init_apartment();
     
