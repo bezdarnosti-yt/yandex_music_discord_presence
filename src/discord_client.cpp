@@ -45,13 +45,14 @@ void DiscordClient::updateRichPresence(const TrackInfo& track) {
 
     discordpp::ActivityAssets assets;
 
-    assets.SetLargeImage("channels4_profile");
+    activity.SetType(discordpp::ActivityTypes::Listening);
     
     if (!track.found) {
-        activity.SetState("Not playing...");
-        activity.SetDetails("Yandex Music");
-        activity.SetType(discordpp::ActivityTypes::Listening);
+        assets.SetLargeImage("channels4_profile");
+        activity.SetState("Ничего не играет :(");
+        activity.SetDetails("Яндекс.Музыка");
     } else {
+        assets.SetLargeImage(track.album_cover_url);
         activity.SetDetails((track.title + " — " + track.artist).c_str());
         activity.SetType(discordpp::ActivityTypes::Listening);
 
@@ -94,6 +95,8 @@ void DiscordClient::updateRichPresence(const TrackInfo& track) {
     }
 
     activity.SetAssets(assets);
+
+    std::cout << track.album_cover_url << std::endl;
     
     this->client.UpdateRichPresence(
         this->activity, [](const discordpp::ClientResult &result) {

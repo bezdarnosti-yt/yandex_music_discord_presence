@@ -10,6 +10,7 @@ struct TrackInfo {
     std::string title;
     std::string artist;
     std::string album;
+    std::string album_cover_url;
     int current_sec;
     int duration_sec;
     bool is_playing;
