@@ -1,16 +1,11 @@
 #define DISCORDPP_IMPLEMENTATION
 
 #include "discord_client.h"
-
 #include <spdlog/spdlog.h>
 
-DiscordClient::DiscordClient() {
-    DiscordClient::init();
-}
+DiscordClient::DiscordClient() { DiscordClient::init(); }
 
-DiscordClient::~DiscordClient() {
-
-}
+DiscordClient::~DiscordClient() {}
 
 void DiscordClient::init() {
     this->client.SetApplicationId(this->app_id);
@@ -56,6 +51,9 @@ void DiscordClient::updateRichPresence(const TrackInfo& track) {
         activity.SetDetails((track.title + " — " + track.artist).c_str());
         activity.SetType(discordpp::ActivityTypes::Listening);
 
+        // Жесткий костыль с таймлайном в статусе дискорда,
+        // Я не знаю как по другому высчитывать время через windows media api
+        // Так как указатель на позицию не работает просто...
         int currentTime = track.current_sec;
         int maxTime = track.duration_sec;
 
@@ -95,8 +93,6 @@ void DiscordClient::updateRichPresence(const TrackInfo& track) {
     }
 
     activity.SetAssets(assets);
-
-    std::cout << track.album_cover_url << std::endl;
     
     this->client.UpdateRichPresence(
         this->activity, [](const discordpp::ClientResult &result) {

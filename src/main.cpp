@@ -10,7 +10,7 @@
 #include "album_art_finder.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-    // Debug purpose
+    // Терминал для отладки, можно удалить в релизной компиляции
     if (AllocConsole()) {
         FILE* pCout;
         freopen_s(&pCout, "CONOUT$", "w", stdout);
@@ -49,10 +49,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             DispatchMessage(&msg);
         }
         
+        // Обновление цикла каждую секунду
         if (updateCounter % 10 == 0) {
             currentTrack = getMediaSessionTrack();
             currentTrack.album_cover_url = currentCover;
             
+            // Обновление информации о новое треке и сброс времени
             if (currentTrack.found != lastTrack.found ||
                 currentTrack.title != lastTrack.title || 
                 currentTrack.artist != lastTrack.artist) {

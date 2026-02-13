@@ -24,6 +24,7 @@ TrackInfo getMediaSessionTrack() {
 
         if (!g_manager) return info;
 
+        // Получение всех сессий из Windows Media API
         auto sessions = g_manager.GetSessions();
         if (!sessions || sessions.Size() == 0) return info;
 
@@ -31,6 +32,9 @@ TrackInfo getMediaSessionTrack() {
             auto session = sessions.GetAt(i);
             if (!session) continue;
 
+            // Выбираем сессию только с Яндекс.Музыкой
+            // Теоретически можно под любую программу использовать данный репо
+            // Если подогнать album_art_finder под API
             auto appId = winrt::to_string(session.SourceAppUserModelId());
             if (appId != "ru.yandex.desktop.music")
                 continue;
