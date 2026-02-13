@@ -38,64 +38,45 @@ void DiscordClient::runCallbacks() {
 void DiscordClient::updateRichPresence(const TrackInfo& track) {
     discordpp::RunCallbacks();
 
+    discordpp::Activity newActivity{};
     discordpp::ActivityAssets assets;
-
-    activity.SetType(discordpp::ActivityTypes::Listening);
+    newActivity.SetType(discordpp::ActivityTypes::Listening);
     
     if (!track.found) {
         assets.SetLargeImage("channels4_profile");
-        activity.SetState("Ничего не играет :(");
-        activity.SetDetails("Яндекс.Музыка");
+        newActivity.SetState("Ничего не играет :(");
+        newActivity.SetDetails("Яндекс.Музыка");
     } else {
         assets.SetLargeImage(track.album_cover_url);
-        activity.SetDetails((track.title + " — " + track.artist).c_str());
-        activity.SetType(discordpp::ActivityTypes::Listening);
-
-        // Жесткий костыль с таймлайном в статусе дискорда,
-        // Я не знаю как по другому высчитывать время через windows media api
-        // Так как указатель на позицию не работает просто...
-        int currentTime = track.current_sec;
-        int maxTime = track.duration_sec;
-
-        std::string s_currentTime;
-        if ((currentTime / 60) < 10) {
-            s_currentTime.append("0");
-        }
-        s_currentTime.append(std::to_string(currentTime / 60));
-        s_currentTime.append(":");
-        if ((currentTime % 60) < 10) {
-            s_currentTime.append("0");
-        }
-        s_currentTime.append(std::to_string(currentTime % 60));
-
-        std::string s_maxTime;
-        if ((maxTime / 60) < 10) {
-            s_maxTime.append("0");
-        }
-        s_maxTime.append(std::to_string(maxTime / 60));
-        s_maxTime.append(":");
-        if ((maxTime % 60) < 10) {
-            s_maxTime.append("0");
-        }
-        s_maxTime.append(std::to_string(maxTime % 60));
-
-        std::string s_finalResult = s_currentTime + "/" + s_maxTime;
+        newActivity.SetDetails(track.title.c_str());
+        newActivity.SetState(track.artist.c_str());
+        
+        auto now = std::chrono::system_clock::now();
+        discordpp::ActivityTimestamps timestamps;
         
         if (track.is_playing) {
+            auto start_time = now - std::chrono::seconds(track.current_sec);
+            auto end_time = now + std::chrono::seconds(track.duration_sec - track.current_sec);
+            
+            timestamps.SetStart(std::chrono::duration_cast<std::chrono::seconds>(
+                start_time.time_since_epoch()).count());
+            timestamps.SetEnd(std::chrono::duration_cast<std::chrono::seconds>(
+                end_time.time_since_epoch()).count());
+            
+            newActivity.SetTimestamps(timestamps);
+            
             assets.SetSmallImage("play");
             assets.SetSmallText("Playing");
-            activity.SetState(s_finalResult.c_str());
         } else {
             assets.SetSmallImage("pause");
             assets.SetSmallText("Paused");
-            activity.SetState("Paused");
         }
     }
 
-    activity.SetAssets(assets);
+    newActivity.SetAssets(assets);
     
     this->client.UpdateRichPresence(
-        this->activity, [](const discordpp::ClientResult &result) {
+        newActivity, [](const discordpp::ClientResult &result) {
             if (result.Successful()) {
                 spdlog::info("Rich presence updated");
             } else {

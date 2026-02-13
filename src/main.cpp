@@ -8,6 +8,7 @@
 #include "tray_icon.h"
 #include "discord_client.h"
 #include "album_art_finder.h"
+#include <spdlog/spdlog.h>
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     // Терминал для отладки, можно удалить в релизной компиляции
@@ -33,14 +34,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     DiscordClient client;
     
     TrackInfo lastTrack{};
-    int updateCounter = 0;
-    int currentTime = 0;
-    int prevTime = 0;
+    TrackInfo currentTrack{};
+    std::string currentCover = "";
 
-    TrackInfo currentTrack = getMediaSessionTrack();
-    client.updateRichPresence(currentTrack);
-    lastTrack = currentTrack;
-    std::string currentCover = getAlbumCoverUrl(currentTrack.artist, currentTrack.title);
+    int updateCounter = 0;
     
     MSG msg;
     while (tray.running) {
@@ -49,42 +46,49 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             DispatchMessage(&msg);
         }
         
-        // Обновление цикла каждую секунду
-        if (updateCounter % 10 == 0) {
+        // Проверяем состояние каждые полсекунды
+        if (updateCounter % 5 == 0) {
+            spdlog::info("Cycle updated!");
+
             currentTrack = getMediaSessionTrack();
-            currentTrack.album_cover_url = currentCover;
+
+            bool needsUpdate = false;
             
-            // Обновление информации о новое треке и сброс времени
+            // Проверка на смену трека
             if (currentTrack.found != lastTrack.found ||
                 currentTrack.title != lastTrack.title || 
                 currentTrack.artist != lastTrack.artist) {
                 
-                lastTrack = currentTrack;
-
-                currentTime = 0;
-
                 currentCover = getAlbumCoverUrl(currentTrack.artist, currentTrack.title);
+                needsUpdate = true;
+
+                spdlog::info("Track changed!");
             }
 
-            if (currentTrack.is_playing != true) {
-                currentTrack.current_sec = currentTime;
+            // Проверка на изменение статуса воспроизведения
+            if (currentTrack.is_playing != lastTrack.is_playing) {
+                needsUpdate = true;
+                spdlog::info("Track paused / play!");
+            }
+
+            // Проверка на перемотку
+            if (currentTrack.found && lastTrack.found) {
+                int timeDiff = abs(currentTrack.current_sec - lastTrack.current_sec);
+                if (timeDiff > 2 && timeDiff < currentTrack.duration_sec - 2) {
+                    needsUpdate = true;
+                    spdlog::info("Track ff!");
+                }
+            }
+
+            // Обновляем Discord при изменениях
+            if (needsUpdate) {
+                spdlog::info("RPC needs to updated!");
+                currentTrack.album_cover_url = currentCover;
                 client.updateRichPresence(currentTrack);
-                updateCounter += 1;
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                continue;
+                lastTrack = currentTrack;
             }
-
-            if (currentTrack.current_sec != prevTime) {
-                prevTime = currentTrack.current_sec;
-                currentTime = prevTime;
-            }
-
-            currentTime += 1;
-            currentTrack.current_sec = currentTime;
-
-            client.updateRichPresence(currentTrack);
         }
-        
+
         updateCounter++;
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }

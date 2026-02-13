@@ -18,5 +18,4 @@ private:
     const uint64_t app_id = 1206479426884345927LL;
 
     discordpp::Client client;
-    discordpp::Activity activity{};
 };
