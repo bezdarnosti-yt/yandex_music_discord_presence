@@ -52,16 +52,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/include
 )
 
-if(WIN32)
-    set(DISCORD_LIB_PATH "${DISCORD_SDK_LIB_DIR}/discord_partner_sdk.lib")
-    set(DISCORD_SHARED_LIB "${DISCORD_SDK_BIN_DIR}/discord_partner_sdk.dll")
-elseif(APPLE)
-    set(DISCORD_LIB_PATH "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.dylib")
-    set(DISCORD_SHARED_LIB "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.dylib")
-else() # Linux
-    set(DISCORD_LIB_PATH "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.so")
-    set(DISCORD_SHARED_LIB "${DISCORD_SDK_LIB_DIR}/libdiscord_partner_sdk.so")
-endif()
+set(DISCORD_LIB_PATH "${DISCORD_SDK_LIB_DIR}/discord_partner_sdk.lib")
+set(DISCORD_SHARED_LIB "${DISCORD_SDK_BIN_DIR}/discord_partner_sdk.dll")
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     ${DISCORD_LIB_PATH}
@@ -69,16 +61,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     windowsapp.lib  # WinRT
     CURL::libcurl
 )
-
-if(UNIX)
-    # Use RPATH when building
-    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-    # Set the RPATH to use the lib directory relative to the executable
-    set(CMAKE_INSTALL_RPATH "$ORIGIN")
-    if(APPLE)
-        set(CMAKE_INSTALL_RPATH "@executable_path")
-    endif()
-endif()
 
 add_custom_command(TARGET yandex-music-discord-rpc POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
