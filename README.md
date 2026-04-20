@@ -1,5 +1,7 @@
 # Yandex Music Discord RPC
 
+[Поддержать автора (DonationAlerts)](https://www.donationalerts.com/r/bezdarnosti1)
+
 <div align="center">
 
 ![Discord](https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)
